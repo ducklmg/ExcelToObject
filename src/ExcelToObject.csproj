@@ -1,0 +1,124 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="14.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProjectGuid>{0CD55F19-616E-46CB-B647-4CFB502E9B1D}</ProjectGuid>
+    <OutputType>Library</OutputType>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <RootNamespace>ExcelToObject</RootNamespace>
+    <AssemblyName>ExcelToObject</AssemblyName>
+    <TargetFrameworkVersion>v3.5</TargetFrameworkVersion>
+    <FileAlignment>512</FileAlignment>
+    <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
+    <TargetFrameworkProfile />
+    <PublishUrl>publish\</PublishUrl>
+    <Install>true</Install>
+    <InstallFrom>Disk</InstallFrom>
+    <UpdateEnabled>false</UpdateEnabled>
+    <UpdateMode>Foreground</UpdateMode>
+    <UpdateInterval>7</UpdateInterval>
+    <UpdateIntervalUnits>Days</UpdateIntervalUnits>
+    <UpdatePeriodically>false</UpdatePeriodically>
+    <UpdateRequired>false</UpdateRequired>
+    <MapFileExtensions>true</MapFileExtensions>
+    <ApplicationRevision>0</ApplicationRevision>
+    <ApplicationVersion>1.0.0.%2a</ApplicationVersion>
+    <IsWebBootstrapper>false</IsWebBootstrapper>
+    <UseApplicationTrust>false</UseApplicationTrust>
+    <BootstrapperEnabled>true</BootstrapperEnabled>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup>
+    <StartupObject />
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="System" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.Xml" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="ExcelDataReader\Errors.cs" />
+    <Compile Include="ExcelDataReader\ExcelOpenXmlReader.cs" />
+    <Compile Include="ExcelDataReader\FormatReader.cs" />
+    <Compile Include="ExcelDataReader\Helpers.cs" />
+    <Compile Include="ExcelDataReader\ReferenceHelper.cs" />
+    <Compile Include="ExcelDataReader\XlsxDimension.cs" />
+    <Compile Include="ExcelDataReader\XlsxNumFmt.cs" />
+    <Compile Include="ExcelDataReader\XlsxSST.cs" />
+    <Compile Include="ExcelDataReader\XlsxStyles.cs" />
+    <Compile Include="ExcelDataReader\XlsxWorkbook.cs" />
+    <Compile Include="ExcelDataReader\XlsxWorksheet.cs" />
+    <Compile Include="ExcelDataReader\XlsxXf.cs" />
+    <Compile Include="ExcelReader.cs" />
+    <Compile Include="ExcelToObjectAttribute.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="SheetData.cs" />
+    <Compile Include="TableToTypeMap.cs" />
+    <Compile Include="Unity.IO.Compression\BlockType.cs" />
+    <Compile Include="Unity.IO.Compression\CompressionMode.cs" />
+    <Compile Include="Unity.IO.Compression\CopyEncoder.cs" />
+    <Compile Include="Unity.IO.Compression\Crc32Helper.cs" />
+    <Compile Include="Unity.IO.Compression\DeflateInput.cs" />
+    <Compile Include="Unity.IO.Compression\DeflaterManaged.cs" />
+    <Compile Include="Unity.IO.Compression\DeflateStream.cs" />
+    <Compile Include="Unity.IO.Compression\DeflateStreamAsyncResult.cs" />
+    <Compile Include="Unity.IO.Compression\FastEncoder.cs" />
+    <Compile Include="Unity.IO.Compression\FastEncoderStatics.cs" />
+    <Compile Include="Unity.IO.Compression\FastEncoderWindow.cs" />
+    <Compile Include="Unity.IO.Compression\FileFormats.cs" />
+    <Compile Include="Unity.IO.Compression\GZipDecoder.cs" />
+    <Compile Include="Unity.IO.Compression\GZipStream.cs" />
+    <Compile Include="Unity.IO.Compression\GZipUtils.cs" />
+    <Compile Include="Unity.IO.Compression\HuffmanTree.cs" />
+    <Compile Include="Unity.IO.Compression\IDeflater.cs" />
+    <Compile Include="Unity.IO.Compression\Inflater.cs" />
+    <Compile Include="Unity.IO.Compression\InflaterState.cs" />
+    <Compile Include="Unity.IO.Compression\InputBuffer.cs" />
+    <Compile Include="Unity.IO.Compression\InvalidDataException.cs" />
+    <Compile Include="Unity.IO.Compression\Match.cs" />
+    <Compile Include="Unity.IO.Compression\MatchState.cs" />
+    <Compile Include="Unity.IO.Compression\OutputBuffer.cs" />
+    <Compile Include="Unity.IO.Compression\OutputWindow.cs" />
+    <Compile Include="Unity.IO.Compression\SR.cs" />
+    <Compile Include="Util.cs" />
+    <Compile Include="ZipExtractor.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="App.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <BootstrapperPackage Include="Microsoft.Net.Framework.3.5.SP1">
+      <Visible>False</Visible>
+      <ProductName>.NET Framework 3.5 SP1</ProductName>
+      <Install>true</Install>
+    </BootstrapperPackage>
+  </ItemGroup>
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
+       Other similar extension points exist, see Microsoft.Common.targets.
+  <Target Name="BeforeBuild">
+  </Target>
+  <Target Name="AfterBuild">
+  </Target>
+  -->
+</Project>
