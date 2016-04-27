@@ -104,6 +104,9 @@
     <Compile Include="ZipExtractor.cs" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="..\README.md">
+      <Link>README.md</Link>
+    </None>
     <None Include="App.config" />
   </ItemGroup>
   <ItemGroup>
