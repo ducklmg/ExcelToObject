@@ -76,13 +76,13 @@ namespace ExcelToObject
 			return default(TablePos);
 		}
 
-		private List<T> ReadListInternal<T>(string dataName, Action<T, string, string> customSetter = null, TableToTypeMap ttm = null) where T : new()
+		private List<T> ReadListInternal<T>(string dataName, Action<T, string, string> customSetter = null, TableToTypeMap ttm = null, int maxCount = 0) where T : new()
 		{
 			TablePos table;
-			return ReadListInternal<T>(dataName, out table, customSetter, ttm);
+			return ReadListInternal<T>(dataName, out table, customSetter, ttm, maxCount);
 		}
 
-		private List<T> ReadListInternal<T>(string dataName, out TablePos table, Action<T, string, string> customSetter = null, TableToTypeMap ttm = null) where T : new()
+		private List<T> ReadListInternal<T>(string dataName, out TablePos table, Action<T, string, string> customSetter = null, TableToTypeMap ttm = null, int maxCount = 0) where T : new()
 		{
 			table = FindTable(dataName);
 			if( table.Sheet == null )
@@ -135,6 +135,9 @@ namespace ExcelToObject
 					break;
 
 				result.Add(rowObj);
+
+				if( maxCount > 0 && result.Count == maxCount )
+					break;
 			}
 
 			return result;
@@ -144,6 +147,12 @@ namespace ExcelToObject
 		public List<T> ReadList<T>(string dataName, Action<T, string, string> customSetter = null) where T : new()
 		{
 			return ReadListInternal<T>(dataName, customSetter);
+		}
+
+		public T ReadSingle<T>(string dataName, Action<T, string, string> customSetter = null) where T : new()
+		{
+			var list = ReadListInternal<T>(dataName, customSetter, null, 1);
+			return list != null && list.Count >= 1 ? list[0] : default(T);
 		}
 
 		public Dictionary<TKey, T> ReadDictionary<TKey, T>(string dataName, Action<T, string, string> customSetter = null) where T : new()
