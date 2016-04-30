@@ -11,8 +11,8 @@ Read this.
     hahah
     <font color="#ffff00">tset</font>
     
-```ruby
-int test(int a, int b)
+```csharp
+public int test(int a, int b)
 {
 	return a + b;
 }
