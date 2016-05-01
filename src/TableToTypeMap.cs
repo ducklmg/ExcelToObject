@@ -106,7 +106,8 @@ namespace ExcelToObject
 					break;
 
 				case CollectionType.Array:
-					array.SetValue(typedValue, arrayIndex++);
+					if( arrayIndex < array.Length )
+						array.SetValue(typedValue, arrayIndex++);
 					break;
 
 				case CollectionType.List:

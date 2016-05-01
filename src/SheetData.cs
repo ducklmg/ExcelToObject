@@ -27,5 +27,23 @@ namespace ExcelToObject
 				return Data[row, col];
 			}
 		}
+
+		public Table FindTable(string name)
+		{
+			string tag = String.Format("[{0}]", name);
+
+			for( int r = 0; r < Rows; r++ )
+			{
+				for( int c = 0; c < Columns; c++ )
+				{
+					if( Data[r, c] == tag )
+					{
+						return new Table(name, this, r, c);
+					}
+				}
+			}
+
+			return null;
+		}
 	}
 }

@@ -15,10 +15,10 @@ namespace ExcelToObject
 
 		public ZipExtractor(byte[] zipArchive)
 		{
-			LoadZip(zipArchive);
+			UnzipAllFiles(zipArchive);
 		}
 
-		private void LoadZip(byte[] zipArchive)
+		private void UnzipAllFiles(byte[] zipArchive)
 		{
 			if( zipArchive.Length < 22 )
 				throw new ArgumentException();

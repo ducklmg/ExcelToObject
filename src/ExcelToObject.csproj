@@ -73,6 +73,7 @@
     <Compile Include="ExcelToObjectAttribute.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="SheetData.cs" />
+    <Compile Include="Table.cs" />
     <Compile Include="TableToTypeMap.cs" />
     <Compile Include="Unity.IO.Compression\BlockType.cs" />
     <Compile Include="Unity.IO.Compression\CompressionMode.cs" />

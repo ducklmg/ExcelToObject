@@ -40,49 +40,27 @@ namespace ExcelToObject
 
 
 		//////////////////////////////////////////////////////////////////////////
-		struct TablePos
+		public Table FindTable(string name)
 		{
-			public SheetData Sheet;
-			public int Row;
-			public int Col;
-		}
-
-		TablePos FindTable(string dataName)
-		{
-			string tag = String.Format("[{0}]", dataName);
-
-			for( int s = 0; s < mSheets.Count; s++ )
+			for( int i = 0; i < mSheets.Count; i++ )
 			{
-				SheetData sheet = mSheets[s];
-
-				for( int r = 0; r < sheet.Rows; r++ )
-				{
-					for( int c = 0; c < sheet.Columns; c++ )
-					{
-						if( sheet[r, c] == tag )
-						{
-							TablePos table;
-
-							table.Sheet = sheet;
-							table.Row = r;
-							table.Col = c;
-
-							return table;
-						}
-					}
-				}
+				var table = mSheets[i].FindTable(name);
+				if( table != null )
+					return table;
 			}
 
-			return default(TablePos);
+			return null;
 		}
 
-		private List<T> ReadListInternal<T>(string dataName, Action<T, string, string> customSetter = null, TableToTypeMap ttm = null, int maxCount = 0) where T : new()
+		class ReadResult<T>
 		{
-			TablePos table;
-			return ReadListInternal<T>(dataName, out table, customSetter, ttm, maxCount);
+			public TableToTypeMap ttm;
+			public TablePos tablePos;
 		}
 
-		private List<T> ReadListInternal<T>(string dataName, out TablePos table, Action<T, string, string> customSetter = null, TableToTypeMap ttm = null, int maxCount = 0) where T : new()
+		delegate bool CustomParser<T>(T obj, string name, string value);
+
+		private List<T> ReadListInternal<T>(string dataName, CustomParser<T> customParser = null, int maxCount = 0, ReadResult result=null) where T : new()
 		{
 			table = FindTable(dataName);
 			if( table.Sheet == null )
@@ -122,9 +100,9 @@ namespace ExcelToObject
 					{
 						bool ret = ttm.SetValue(rowObj, col, value);
 
-						if( ret == false && customSetter != null )
+						if( ret == false && customParser != null )
 						{
-							customSetter(rowObj, sheet[rowBase, colBase + col], value);
+							customParser(rowObj, sheet[rowBase, colBase + col], value);
 						}
 
 						emptyRow = false;
