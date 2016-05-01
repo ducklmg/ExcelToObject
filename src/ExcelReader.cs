@@ -38,7 +38,6 @@ namespace ExcelToObject
 			mSheets = ExcelOpenXmlReader.ReadSheets(xlsxFile);
 		}
 
-
 		//////////////////////////////////////////////////////////////////////////
 		public Table FindTable(string name)
 		{
@@ -58,7 +57,7 @@ namespace ExcelToObject
 			public TablePos tablePos;
 		}
 
-		delegate bool CustomParser<T>(T obj, string name, string value);
+		public delegate bool CustomParser<T>(T obj, string name, string value);
 
 		private List<T> ReadListInternal<T>(string dataName, CustomParser<T> customParser = null, int maxCount = 0, ReadResult result=null) where T : new()
 		{
