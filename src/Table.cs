@@ -48,7 +48,7 @@ namespace ExcelToObject
 		void CalcTableSize()
 		{
 			int maxColumns = mSheet.Columns - mColStart;
-			int maxRows = mSheet.Rows - mRowStart;
+			int maxRows = mSheet.Rows - mRowStart - 2;
 
 			for( mColumnCount = 0; mColumnCount < maxColumns; mColumnCount++ )
 				if( GetColumnName(mColumnCount) == null )
