@@ -103,8 +103,8 @@ Read excel file into C# object.
 
 
 ## Details ##
-* In default,  every sheet in excel wil be searched for a table.
-* Several API be used for more refined control.
+* By default,  every sheet in excel wil be searched for a table.
+* Several APIs are provided for more refined control.
 
 ## License ##
 > MIT License
