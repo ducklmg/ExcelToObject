@@ -1,14 +1,17 @@
 # ExcelToObject #
 
 Read excel datasheet into C# object.
+
 ![Summary image](doc/summary.png)
+
+<br/>
 
 ## Features ##
 * Unity 4/5 compatible
 * MIT License
 * Single DLL
 
-
+<br/>
 
 ## Usage ##
 * Table is marked with name in brackets *[Table Name]*.
@@ -16,8 +19,12 @@ Read excel datasheet into C# object.
 #### #1) Simple case ####
 * Read table into `List<T>`
 
+> **Table**
+> 
 ![](doc/table1.png)
 
+> **Code**
+>
     public class EnemyData
     {
     	public string id;
@@ -41,9 +48,12 @@ Read excel datasheet into C# object.
 * It consists with same column name.
 * Column name can be distinguished by '#' notation. (postfix after '#' is ignored)
 
-
+> **Table**
+> 
 ![](doc/table2.png)
 
+> **Code**
+>
     public class RatioData
     {
     	public int maxCount;
@@ -58,8 +68,12 @@ Read excel datasheet into C# object.
 * Key value is specified in '#' postfix
 * Key can be any type which is convertible to.
 
+> **Table**
+> 
 ![](doc/table3.png)
 
+> **Code**
+>
     public class StagePhaseData
     {
     	public StageType type;
@@ -75,27 +89,34 @@ Read excel datasheet into C# object.
 * Result can be `Dictionary<TKey, TValue>`
 * Specify key column name for dictionary.
 
+> **Table**
+> 
 ![](doc/table4.png)
 
+> **Code**
+>
     public class ModData
     {
     	public float spawnInterval_Modify;
     }
      
-    Dictionary<StageType, ModData> modData = excelReader.ReadDictionary<StageType, ModData>("StageModifyData", "type");
+    Dictionary<StageType, ModData> modData;
+    modData = excelReader.ReadDictionary<StageType, ModData>("StageModifyData", "type");
 
+<br/>
 
 ## License ##
 > MIT License
 
 Refer to [License](License) file
 
+<br/>
 
 ## Download ##
 
 > [ExcelToObject.dll](binaries/ExcelToObject.dll)
 
 
-
+<br/>
 
 `EOF`
