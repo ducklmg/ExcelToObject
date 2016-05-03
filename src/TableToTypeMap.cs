@@ -173,6 +173,9 @@ namespace ExcelToObject
 
 		public bool SetValue(object instance, int columnIndex, string value)
 		{
+			if( columnIndex >= mColumns.Count )
+				throw new ArgumentException();
+
 			ColumnData cd = mColumns[columnIndex];
 			if( cd != null )
 			{

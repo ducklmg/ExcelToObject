@@ -6,6 +6,9 @@ using ExcelDataReader;
 
 namespace ExcelToObject
 {
+	/// <summary>
+	/// Read and parse excel table.
+	/// </summary>
 	public class ExcelReader
 	{
 		List<SheetData> mSheets;
@@ -38,7 +41,12 @@ namespace ExcelToObject
 			mSheets = ExcelOpenXmlReader.ReadSheets(xlsxFile);
 		}
 
-		//////////////////////////////////////////////////////////////////////////
+		/// <summary>
+		/// Find table with given name.
+		/// In excel, table should be marked with braketed name ([table-name])
+		/// </summary>
+		/// <param name="name">Table name (without braket)</param>
+		/// <returns>Table instance. If not found, returns null.</returns>
 		public Table FindTable(string name)
 		{
 			for( int i = 0; i < mSheets.Count; i++ )
@@ -51,168 +59,216 @@ namespace ExcelToObject
 			return null;
 		}
 
-		class ReadResult<T>
-		{
-			public TableToTypeMap ttm;
-			public TablePos tablePos;
-		}
-
+		/// <summary>
+		/// Custom parser signiture for individual properties.
+		/// </summary>
+		/// <typeparam name="T">Instance type</typeparam>
+		/// <param name="obj">instance</param>
+		/// <param name="name">property name (column)</param>
+		/// <param name="value">property value. null if empty cell.</param>
+		/// <returns></returns>
 		public delegate bool CustomParser<T>(T obj, string name, string value);
 
-		private List<T> ReadListInternal<T>(string dataName, CustomParser<T> customParser = null, int maxCount = 0, ReadResult result=null) where T : new()
+
+		//////////////////////////////////////////////////////////////
+		class ReadContext<T>
 		{
-			table = FindTable(dataName);
-			if( table.Sheet == null )
+			public int readMaxRows;
+			public CustomParser<T> customParser;
+
+			public Table table;
+			public TableToTypeMap ttm;
+		}
+
+		private List<T> ReadListInternal<T>(string tableName, ReadContext<T> context) where T : new()
+		{
+			// find table
+			Table table = FindTable(tableName);
+			if( table == null )
 				return null;
 
-			var sheet = table.Sheet;
-			int rowBase = table.Row + 1;
-			int colBase = table.Col;
-
 			// header parse
-			if( ttm == null )
-				ttm = new TableToTypeMap(typeof(T));
+			var ttm = new TableToTypeMap(typeof(T));
 
-			for( int col = colBase; col < sheet.Columns; col++ )
+			for( int col = 0; col < table.Columns; col++ )
 			{
-				string fieldName = sheet[rowBase, col];
-				if( fieldName == null )
-					break;
-
-				ttm.AddFieldColumn(fieldName);
+				ttm.AddFieldColumn(table.GetColumnName(col));
 			}
 
-			List<T> result = new List<T>();
+			// rows parse
+			List<T> result = new List<T>(table.Rows);
 
-			for( int row = rowBase + 1; row < sheet.Rows; row++ )
+			for(int row = 0; row<table.Rows; row++)
 			{
 				T rowObj = new T();
 
 				ttm.OnNewRow(rowObj);
 
-				bool emptyRow = true;
-
-				for( int col = 0; col < ttm.ColumnCount; col++ )
+				for( int col = 0; col < table.Columns; col++ )
 				{
-					string value = sheet[row, colBase + col];
+					string value = table.GetValue(row, col);
 					if( value != null )
 					{
 						bool ret = ttm.SetValue(rowObj, col, value);
 
-						if( ret == false && customParser != null )
+						// if the value is not handled, give oppotunity for a custom parser
+						if( ret == false && context.customParser != null )
 						{
-							customParser(rowObj, sheet[rowBase, colBase + col], value);
+							context.customParser(rowObj, table.GetColumnName(col), value);
 						}
-
-						emptyRow = false;
 					}
 				}
 
-				if( emptyRow )
-					break;
-
 				result.Add(rowObj);
 
-				if( maxCount > 0 && result.Count == maxCount )
+				if( context.readMaxRows > 0 && result.Count >= context.readMaxRows )
 					break;
 			}
+
+			// set context result
+			context.table = table;
+			context.ttm = ttm;
 
 			return result;
 		}
 
 		// public methods
-		public List<T> ReadList<T>(string dataName, Action<T, string, string> customSetter = null) where T : new()
+
+		/// <summary>
+		/// Read table into list
+		/// </summary>
+		/// <typeparam name="T"></typeparam>
+		/// <param name="tableName"></param>
+		/// <param name="customParser"></param>
+		/// <returns>table list. null if not found</returns>
+		public List<T> ReadList<T>(string tableName, CustomParser<T> customParser = null) where T : new()
 		{
-			return ReadListInternal<T>(dataName, customSetter);
+			var context = new ReadContext<T>()
+			{
+				customParser = customParser
+			};
+
+			return ReadListInternal<T>(tableName, context);
 		}
 
-		public T ReadSingle<T>(string dataName, Action<T, string, string> customSetter = null) where T : new()
+		/// <summary>
+		/// Read table into list and return first row
+		/// </summary>
+		/// <typeparam name="T"></typeparam>
+		/// <param name="tableName"></param>
+		/// <param name="customParser"></param>
+		/// <returns>first row object. default value if not found.</returns>
+		public T ReadSingle<T>(string tableName, CustomParser<T> customParser = null) where T : new()
 		{
-			var list = ReadListInternal<T>(dataName, customSetter, null, 1);
-			return list != null && list.Count >= 1 ? list[0] : default(T);
+			var context = new ReadContext<T>()
+			{
+				customParser = customParser,
+				readMaxRows = 1
+			};
+
+			var list = ReadListInternal<T>(tableName, context);
+			if( list != null && list.Count >= 1 )
+			{
+				return list[0];
+			}
+			else
+			{
+				return default(T);
+			}
 		}
 
-		public Dictionary<TKey, T> ReadDictionary<TKey, T>(string dataName, Action<T, string, string> customSetter = null) where T : new()
+		public Dictionary<TKey, T> ReadDictionary<TKey, T>(string dataName, CustomParser<T> customParser = null) where T : new()
 		{
-			return ReadDictionary<TKey, T>(dataName, "", customSetter);
+			return ReadDictionary<TKey, T>(dataName, (string)null, customParser);
 		}
 
-		public Dictionary<TKey, T> ReadDictionary<TKey, T>(string dataName, string keyName, Action<T, string, string> customSetter = null) where T : new()
+		/// <summary>
+		/// Read table into dictionary
+		/// </summary>
+		/// <typeparam name="TKey"></typeparam>
+		/// <typeparam name="T"></typeparam>
+		/// <param name="tableName">table name</param>
+		/// <param name="keyName">column name for key</param>
+		/// <param name="customParser">custom parser if any</param>
+		/// <returns>table dictionary. null if not found.</returns>
+		public Dictionary<TKey, T> ReadDictionary<TKey, T>(string tableName, string keyName, CustomParser<T> customParser = null) where T : new()
 		{
-			var ttm = new TableToTypeMap(typeof(T));
+			var context = new ReadContext<T>()
+			{
+				customParser = customParser
+			};
 
-			TablePos table;
-			List<T> list = ReadListInternal<T>(dataName, out table, customSetter, ttm);
+			List<T> list = ReadListInternal<T>(tableName, context);
 			if( list == null )
 				return null;
 
 			var dic = new Dictionary<TKey, T>(list.Count);
 
-			// keyName의 column을 찾는다.
-			int col = table.Col;
-			int rowBase = table.Row + 1;
+			int keyColumn = keyName != null ? context.table.FindColumnIndex(keyName) : 0;
+			if( keyColumn == -1 )
+				throw new ArgumentException();
 
-			if( keyName.IsValid() )
+			for( int row = 0; row < list.Count; row++ )
 			{
-				for( ; col < table.Sheet.Columns; col++ )
-					if( table.Sheet[rowBase, col] == keyName )
-						break;
-
-				if( col == table.Sheet.Columns )
-					col = table.Col;
-			}
-
-			for( int i = 0; i < list.Count; i++ )
-			{
-				string keyStr = table.Sheet[rowBase + 1 + i, col];
+				string keyStr = context.table.GetValue(row, keyColumn);
 
 				TKey key = Util.ConvertType<TKey>(keyStr);
-				dic[key] = list[i];
+				dic[key] = list[row];
 			}
 
 			return dic;
 		}
 
-		public Dictionary<TKey, T> ReadDictionary<TKey, T>(string dataName, Func<T, TKey> keySelector, Action<T, string, string> customSetter = null) where T : new()
+		/// <summary>
+		/// Read table into dictionary
+		/// </summary>
+		/// <typeparam name="TKey"></typeparam>
+		/// <typeparam name="T"></typeparam>
+		/// <param name="tableName">table name</param>
+		/// <param name="keySelector">select key value from row object</param>
+		/// <param name="customParser">custom parser if any</param>
+		/// <returns></returns>
+		public Dictionary<TKey, T> ReadDictionary<TKey, T>(string tableName, Func<T, TKey> keySelector, CustomParser<T> customParser = null) where T : new()
 		{
-			var ttm = new TableToTypeMap(typeof(T));
+			var context = new ReadContext<T>()
+			{
+				customParser = customParser
+			};
 
-			List<T> list = ReadListInternal<T>(dataName, customSetter, ttm);
+			List<T> list = ReadListInternal<T>(tableName, context);
 			if( list == null )
 				return null;
 
 			var dic = new Dictionary<TKey, T>(list.Count);
 
-			for( int i = 0; i < list.Count; i++ )
+			for( int row = 0; row < list.Count; row++ )
 			{
-				TKey key = keySelector(list[i]);
+				TKey key = keySelector(list[row]);
 
-				dic[key] = list[i];
+				dic[key] = list[row];
 			}
 
 			return dic;
 		}
 
-		public T ReadValue<T>(string dataName, string propName, T defaultValue = default(T))
+		/// <summary>
+		/// Read just a value
+		/// </summary>
+		/// <typeparam name="T"></typeparam>
+		/// <param name="tableName">table name</param>
+		/// <param name="columnName">column name</param>
+		/// <param name="defaultValue">a return value for abnormal case</param>
+		/// <returns></returns>
+		public T ReadValue<T>(string tableName, string columnName, T defaultValue = default(T))
 		{
-			var table = FindTable(dataName);
-			if( table.Sheet == null )
-				return defaultValue;
-
-			var sheet = table.Sheet;
-			int rowBase = table.Row + 1;
-			int colBase = table.Col;
-
-			// header parse
-			for( int col = colBase; col < sheet.Columns; col++ )
+			// find table
+			Table table = FindTable(tableName);
+			if( table != null )
 			{
-				string fieldName = sheet[rowBase, col];
-				if( fieldName == null )
-					break;
-
-				if( propName == fieldName )
+				int column = table.FindColumnIndex(columnName);
+				if( column != -1 )
 				{
-					string value = sheet[rowBase + 1, col];
+					string value = table.GetValue(0, column);
 					return Util.ConvertType<T>(value);
 				}
 			}

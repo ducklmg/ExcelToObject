@@ -5,6 +5,14 @@ using System.Text;
 
 namespace ExcelToObject
 {
+	/* Table structure in cell grid
+	 * 
+	 * |[Name]   |
+	 * |column1  |column2  |column3  | ...  |
+	 * |value1   |value2   |value3   | ...  |
+	 * | ...     | ...     | ...     | ...  |
+	 * 
+	*/
 	public class Table
 	{
 		public string Name { get; private set; }
@@ -17,7 +25,7 @@ namespace ExcelToObject
 		public int Columns { get { return mColumnCount; } }
 
 		int mRowCount;
-		public int Rows { get { return mRowCount; } }
+		public int Rows { get { return mRowCount; } }		// rows count (except table name/column row)
 
 		public Table(string name, SheetData sheet, int row, int col)
 		{
@@ -43,7 +51,7 @@ namespace ExcelToObject
 			int maxRows = mSheet.Rows - mRowStart;
 
 			for( mColumnCount = 0; mColumnCount < maxColumns; mColumnCount++ )
-				if( GetColumn(mColumnCount) == null )
+				if( GetColumnName(mColumnCount) == null )
 					break;
 
 			if( mColumnCount == 0 )
@@ -66,7 +74,7 @@ namespace ExcelToObject
 			}
 		}
 
-		public string GetColumn(int index)
+		public string GetColumnName(int index)
 		{
 			return this[1, index];
 		}
@@ -76,11 +84,11 @@ namespace ExcelToObject
 			return this[row + 2, col];
 		}
 
-		public int FindColumn(string name)
+		public int FindColumnIndex(string name)
 		{
 			for( int i = 0; i < mSheet.Columns; i++ )
 			{
-				string n = GetColumn(i);
+				string n = GetColumnName(i);
 				if( n == name )
 					return i;
 
