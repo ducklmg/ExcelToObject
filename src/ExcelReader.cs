@@ -1,7 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections;
 using System.Text;
 using System.IO;
+using System.Reflection;
 using ExcelDataReader;
 
 namespace ExcelToObject
@@ -45,13 +47,25 @@ namespace ExcelToObject
 		/// Find table with given name.
 		/// In excel, table should be marked with braketed name ([table-name])
 		/// </summary>
-		/// <param name="name">Table name (without braket)</param>
+		/// <param name="path">Table path</param>
 		/// <returns>Table instance. If not found, returns null.</returns>
-		public Table FindTable(string name)
+		public Table FindTable(string path)
 		{
+			/* path syntax
+			 *  1) TableName : find all sheets for the name.
+			 *  2) SheetName/TableName : find just in the sheet.
+			 */
+			int pos = path.IndexOf('/');
+
+			string sheetName = pos != -1 ? path.Substring(0, pos) : null;
+			string tableName = pos != -1 ? path.Substring(pos+1) : path;
+
 			for( int i = 0; i < mSheets.Count; i++ )
 			{
-				var table = mSheets[i].FindTable(name);
+				if( sheetName.IsValid() && mSheets[i].Name.Equals(sheetName, StringComparison.OrdinalIgnoreCase) == false )
+					continue;
+
+				var table = mSheets[i].FindTable(tableName);
 				if( table != null )
 					return table;
 			}
@@ -67,40 +81,41 @@ namespace ExcelToObject
 		/// <param name="name">property name (column)</param>
 		/// <param name="value">property value. null if empty cell.</param>
 		/// <returns></returns>
-		public delegate bool CustomParser<T>(T obj, string name, string value);
-
+		public delegate bool CustomParser(object obj, string name, string value);
 
 		//////////////////////////////////////////////////////////////
-		class ReadContext<T>
+		internal class ReadContext
 		{
 			public int readMaxRows;
-			public CustomParser<T> customParser;
+			public CustomParser customParser;
 
 			public Table table;
 			public TableToTypeMap ttm;
 		}
 
-		private List<T> ReadListInternal<T>(string tableName, ReadContext<T> context) where T : new()
+		internal bool ReadListInternal(string tablePath, Type itemType, ReadContext context, IList destList)
 		{
 			// find table
-			Table table = FindTable(tableName);
+			Table table = FindTable(tablePath);
 			if( table == null )
-				return null;
+				return false;
 
 			// header parse
-			var ttm = new TableToTypeMap(typeof(T));
+			var ttm = new TableToTypeMap(itemType);
 
 			for( int col = 0; col < table.Columns; col++ )
 			{
 				ttm.AddFieldColumn(table.GetColumnName(col));
 			}
 
-			// rows parse
-			List<T> result = new List<T>(table.Rows);
+			int readRows = table.Rows;
+			if( 0 < context.readMaxRows && context.readMaxRows < table.Rows )
+				readRows = context.readMaxRows;
 
-			for(int row = 0; row<table.Rows; row++)
+			// rows parse
+			for( int row = 0; row < readRows; row++ )
 			{
-				T rowObj = new T();
+				object rowObj = Util.New(itemType);
 
 				ttm.OnNewRow(rowObj);
 
@@ -111,7 +126,7 @@ namespace ExcelToObject
 					{
 						bool ret = ttm.SetValue(rowObj, col, value);
 
-						// if the value is not handled, give oppotunity for a custom parser
+						// if the value is not handled, give oppotunity to a custom parser
 						if( ret == false && context.customParser != null )
 						{
 							context.customParser(rowObj, table.GetColumnName(col), value);
@@ -119,150 +134,163 @@ namespace ExcelToObject
 					}
 				}
 
-				result.Add(rowObj);
-
-				if( context.readMaxRows > 0 && result.Count >= context.readMaxRows )
-					break;
+				destList.Add(rowObj);
 			}
 
 			// set context result
 			context.table = table;
 			context.ttm = ttm;
 
-			return result;
+			return true;
 		}
 
-		// public methods
+		private List<T> ReadListInternal<T>(string tablePath, ReadContext context) where T : new()
+		{
+			var result = new List<T>();
+
+			bool retn = ReadListInternal(tablePath, typeof(T), context, result);
+
+			result.TrimExcess();
+			return retn ? result : null;
+		}
 
 		/// <summary>
 		/// Read table into list
 		/// </summary>
 		/// <typeparam name="T"></typeparam>
-		/// <param name="tableName"></param>
+		/// <param name="tablePath"></param>
 		/// <param name="customParser"></param>
 		/// <returns>table list. null if not found</returns>
-		public List<T> ReadList<T>(string tableName, CustomParser<T> customParser = null) where T : new()
+		public List<T> ReadList<T>(string tablePath, CustomParser customParser = null) where T : new()
 		{
-			var context = new ReadContext<T>()
+			var context = new ReadContext()
 			{
 				customParser = customParser
 			};
 
-			return ReadListInternal<T>(tableName, context);
+			return ReadListInternal<T>(tablePath, context);
 		}
 
 		/// <summary>
 		/// Read table into list and return first row
 		/// </summary>
 		/// <typeparam name="T"></typeparam>
-		/// <param name="tableName"></param>
+		/// <param name="tablePath"></param>
 		/// <param name="customParser"></param>
 		/// <returns>first row object. default value if not found.</returns>
-		public T ReadSingle<T>(string tableName, CustomParser<T> customParser = null) where T : new()
+		public T ReadSingle<T>(string tablePath, CustomParser customParser = null) where T : new()
 		{
-			var context = new ReadContext<T>()
+			var context = new ReadContext()
 			{
 				customParser = customParser,
 				readMaxRows = 1
 			};
 
-			var list = ReadListInternal<T>(tableName, context);
-			if( list != null && list.Count >= 1 )
+			var list = ReadListInternal<T>(tablePath, context);
+			return list != null ? list[0] : default(T);
+		}
+
+
+
+		#region ReadDictionary
+
+		internal class KeySelector
+		{
+			Func<object, object> func;
+			FieldInfo fi;
+
+			static public KeySelector From<TKey, TValue>(Func<TValue, TKey> selectFunc)
 			{
-				return list[0];
+				return new KeySelector() { func = (value => selectFunc((TValue)value)) };
 			}
-			else
+
+			static public KeySelector From(Type valueType, string keyName)
 			{
-				return default(T);
+				return new KeySelector() { fi = valueType.GetField(keyName, BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic) };
+			}
+
+			public object Select(object value)
+			{
+				if( fi != null )
+					return fi.GetValue(value);
+
+				if( func != null )
+					return func(value);
+
+				throw new Exception();
 			}
 		}
 
-		public Dictionary<TKey, T> ReadDictionary<TKey, T>(string dataName, CustomParser<T> customParser = null) where T : new()
+		internal bool ReadDictionaryInternal(string tablePath, Type valueType, ReadContext context, IDictionary destDic, KeySelector keySelector = null)
 		{
-			return ReadDictionary<TKey, T>(dataName, (string)null, customParser);
+			List<object> values = new List<object>();
+
+			bool retn = ReadListInternal(tablePath, valueType, context, values);
+			if( retn == false )
+				return false;
+
+			if( keySelector == null )
+				keySelector = KeySelector.From(valueType, context.table.GetColumnName(0));
+
+			foreach( object value in values )
+			{
+				object key = keySelector.Select(value);
+
+				destDic.Add(key, value);
+			}
+
+			return true;
 		}
 
-		/// <summary>
-		/// Read table into dictionary
-		/// </summary>
-		/// <typeparam name="TKey"></typeparam>
-		/// <typeparam name="T"></typeparam>
-		/// <param name="tableName">table name</param>
-		/// <param name="keyName">column name for key</param>
-		/// <param name="customParser">custom parser if any</param>
-		/// <returns>table dictionary. null if not found.</returns>
-		public Dictionary<TKey, T> ReadDictionary<TKey, T>(string tableName, string keyName, CustomParser<T> customParser = null) where T : new()
+		public Dictionary<TKey, T> ReadDictionary<TKey, T>(string tablePath, string keyName, CustomParser customParser = null) where T : new()
 		{
-			var context = new ReadContext<T>()
+			var context = new ReadContext()
 			{
 				customParser = customParser
 			};
 
-			List<T> list = ReadListInternal<T>(tableName, context);
-			if( list == null )
-				return null;
+			var dic = new Dictionary<TKey, T>();
 
-			var dic = new Dictionary<TKey, T>(list.Count);
+			var keySelector = keyName.IsValid() ? KeySelector.From(typeof(T), keyName) : null;
 
-			int keyColumn = keyName != null ? context.table.FindColumnIndex(keyName) : 0;
-			if( keyColumn == -1 )
-				throw new ArgumentException();
+			bool retn = ReadDictionaryInternal(tablePath, typeof(T), context, dic, keySelector);
 
-			for( int row = 0; row < list.Count; row++ )
-			{
-				string keyStr = context.table.GetValue(row, keyColumn);
-
-				TKey key = Util.ConvertType<TKey>(keyStr);
-				dic[key] = list[row];
-			}
-
-			return dic;
+			return retn ? dic : null;
 		}
 
-		/// <summary>
-		/// Read table into dictionary
-		/// </summary>
-		/// <typeparam name="TKey"></typeparam>
-		/// <typeparam name="T"></typeparam>
-		/// <param name="tableName">table name</param>
-		/// <param name="keySelector">select key value from row object</param>
-		/// <param name="customParser">custom parser if any</param>
-		/// <returns></returns>
-		public Dictionary<TKey, T> ReadDictionary<TKey, T>(string tableName, Func<T, TKey> keySelector, CustomParser<T> customParser = null) where T : new()
+		public Dictionary<TKey, T> ReadDictionary<TKey, T>(string tablePath, CustomParser customParser = null) where T : new()
 		{
-			var context = new ReadContext<T>()
+			return ReadDictionary<TKey, T>(tablePath, String.Empty, customParser);
+		}
+
+		public Dictionary<TKey, T> ReadDictionary<TKey, T>(string tablePath, Func<T, TKey> keySelector, CustomParser customParser = null) where T : new()
+		{
+			var context = new ReadContext()
 			{
 				customParser = customParser
 			};
 
-			List<T> list = ReadListInternal<T>(tableName, context);
-			if( list == null )
-				return null;
+			var dic = new Dictionary<TKey, T>();
 
-			var dic = new Dictionary<TKey, T>(list.Count);
+			bool retn = ReadDictionaryInternal(tablePath, typeof(T), context, dic, KeySelector.From(keySelector));
 
-			for( int row = 0; row < list.Count; row++ )
-			{
-				TKey key = keySelector(list[row]);
-
-				dic[key] = list[row];
-			}
-
-			return dic;
+			return retn ? dic : null;
 		}
+
+		#endregion
 
 		/// <summary>
 		/// Read just a value
 		/// </summary>
 		/// <typeparam name="T"></typeparam>
-		/// <param name="tableName">table name</param>
+		/// <param name="tablePath">table name</param>
 		/// <param name="columnName">column name</param>
 		/// <param name="defaultValue">a return value for abnormal case</param>
 		/// <returns></returns>
-		public T ReadValue<T>(string tableName, string columnName, T defaultValue = default(T))
+		public T ReadValue<T>(string tablePath, string columnName, T defaultValue = default(T))
 		{
 			// find table
-			Table table = FindTable(tableName);
+			Table table = FindTable(tablePath);
 			if( table != null )
 			{
 				int column = table.FindColumnIndex(columnName);
@@ -274,6 +302,18 @@ namespace ExcelToObject
 			}
 
 			return defaultValue;
+		}
+
+		public void MapInto(object destObj)
+		{
+			var mapper = new ObjectMapper(this);
+
+			bool retn = mapper.MapInto(destObj);
+
+#if DEBUG
+			if( retn == false )
+				throw new Exception();
+#endif
 		}
 	}
 }

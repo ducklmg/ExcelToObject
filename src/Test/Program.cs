@@ -73,7 +73,7 @@ namespace Test
 			public Dictionary<EnemyType, float> ratio;
 		}
 
-		[ExcelToObject(TableName: "abc", SheetName: "sheet")]
+		[ExcelToObject(tablePath: "sheet/abc")]
 		public List<StagePhaseData> StagePhase;
 
 		public class StageModifyData

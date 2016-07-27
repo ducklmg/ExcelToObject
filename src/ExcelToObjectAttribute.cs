@@ -7,15 +7,15 @@ namespace ExcelToObject
 {
 	public class ExcelToObjectAttribute : Attribute
 	{
-		public string TableName { get; private set; }
-		public string KeyName { get; private set; }
-		public string SheetName { get; private set; }
+		public string TablePath { get; set; }
+		public string DictionaryKeyName { get; set; }
+		public bool Ignore { get; set; }
 
-		public ExcelToObjectAttribute(string TableName = null, string KeyName = null, string SheetName = null)
+		public ExcelToObjectAttribute(string tablePath = null, string dictionaryKeyName = null, bool ignore = false)
 		{
-			this.TableName = TableName;
-			this.KeyName = KeyName;
-			this.SheetName = SheetName;
+			this.TablePath = tablePath;
+			this.DictionaryKeyName = dictionaryKeyName;
+			this.Ignore = ignore;
 		}
 	}
 }

@@ -71,6 +71,7 @@
     <Compile Include="ExcelDataReader\XlsxXf.cs" />
     <Compile Include="ExcelReader.cs" />
     <Compile Include="ExcelToObjectAttribute.cs" />
+    <Compile Include="ObjectMapper.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="SheetData.cs" />
     <Compile Include="Table.cs" />

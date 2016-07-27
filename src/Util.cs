@@ -41,5 +41,10 @@ namespace ExcelToObject
 				return ms.ToArray();
 			}
 		}
+
+		public static object New(Type type, params object[] args)
+		{
+			return Activator.CreateInstance(type, args);
+		}
 	}
 }

@@ -72,9 +72,7 @@ namespace ExcelToObject
 				if( value == null )
 				{
 					// 여기서 생성해 주자. Array, List, Dictionary 모두 정수 하나를 인자로 받는 생성자를 호출한다.
-					var ctor = fieldInfo.FieldType.GetConstructor(new Type[] { typeof(int) });
-
-					value = ctor.Invoke(new object[] { columnCount });
+					value = Util.New(fieldInfo.FieldType, columnCount);
 
 					fieldInfo.SetValue(obj, value);
 				}
