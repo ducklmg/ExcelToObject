@@ -14,6 +14,11 @@ namespace ExcelToObject
 	public class ExcelReader
 	{
 		List<SheetData> mSheets;
+        public enum ReadMode
+        {
+            ExclusiveRead,
+            SharedRead,
+        }
 
 		public List<SheetData> Sheets
 		{
@@ -30,8 +35,23 @@ namespace ExcelToObject
 
 		public ExcelReader(string filePath)
 		{
-			ReadSheetList(File.ReadAllBytes(filePath));
-		}
+            ReadSheetList(File.ReadAllBytes(filePath));
+        }
+
+        public ExcelReader(string filePath, ReadMode readMode)
+        {
+            if (readMode == ReadMode.SharedRead)
+            {
+                using (var fs = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
+                {
+                    ReadSheetList(fs.ReadAll());
+                }
+            }
+            else
+            {
+                ReadSheetList(File.ReadAllBytes(filePath));
+            }
+        }
 
 		public ExcelReader(Stream stream)
 		{
@@ -236,7 +256,15 @@ namespace ExcelToObject
 			{
 				object key = keySelector.Select(value);
 
-				destDic.Add(key, value);
+                try
+                {
+                    destDic.Add(key, value);
+                }
+				catch (ArgumentException ae)
+                {
+                    // Key already exists?
+                    throw new Exception(string.Format("tablePath={0}, key={1}", tablePath, key), ae);
+                }
 			}
 
 			return true;
