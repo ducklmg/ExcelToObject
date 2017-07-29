@@ -14,15 +14,15 @@ namespace ExcelToObject
 			if( typeof(T).IsEnum )
 				return (T)Enum.Parse(typeof(T), value);
 
-            var converter = TypeDescriptor.GetConverter(typeof(T));
-            if (converter != null && converter.CanConvertFrom(value.GetType()))
-            {
-                return (T)converter.ConvertFrom(value);
-            }
-            else
-            {
-                return (T)Convert.ChangeType(value, typeof(T));
-            }
+			var converter = TypeDescriptor.GetConverter(typeof(T));
+			if (converter != null && converter.CanConvertFrom(value.GetType()))
+			{
+				return (T)converter.ConvertFrom(value);
+			}
+			else
+			{
+				return (T)Convert.ChangeType(value, typeof(T));
+			}
 		}
 
 		public static object ConvertType(string value, Type type)
@@ -30,15 +30,15 @@ namespace ExcelToObject
 			if( type.IsEnum )
 				return Enum.Parse(type, value);
 
-            var converter = TypeDescriptor.GetConverter(type);
-            if (converter != null && converter.CanConvertFrom(value.GetType()))
-            {
-                return converter.ConvertFrom(value);
-            }
-            else
-            {
-                return Convert.ChangeType(value, type);
-            }
+			var converter = TypeDescriptor.GetConverter(type);
+			if (converter != null && converter.CanConvertFrom(value.GetType()))
+			{
+				return converter.ConvertFrom(value);
+			}
+			else
+			{
+				return Convert.ChangeType(value, type);
+			}
 		}
 
 		public static bool IsValid(this string s)
