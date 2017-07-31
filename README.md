@@ -6,13 +6,13 @@ Read excel file into C# object.
 
 
 ## Features ##
-* Unity 4/5 compatible
+* Unity 4/5 compatible (uses DotNet Framework 2)
 * Single DLL
 * Support [Office Open XML](https://en.wikipedia.org/wiki/Office_Open_XML) format (`.xlsx`)
 * MIT License
 
 ## Usage ##
-* Table is marked with a name in brackets *[Table Name]*.
+
 
 #### #1) Simple case ####
 * Read table into `List<T>`
@@ -103,8 +103,29 @@ Read excel file into C# object.
 
 
 ## Details ##
-* By default,  every sheet in excel wil be searched for a table.
-* Several APIs are provided for more refined control.
+
+#### ExcelReader ####
+* Entry point for excel data reading.
+
+        ExcelReader reader = new ExcelReader("test.xlsx");
+
+* Contains excel sheet lists.
+
+        var sheet = reader.Sheet[0];
+
+#### SheetData ####
+* Represents excel sheet data in row-column access pattern.
+
+        var cell = sheetData[row, column];
+
+* Can be used to search table by name
+
+        var table = sheetData.FindTable("TableName");
+
+#### Table ####
+* Manipulate excel 
+
+
 
 ## License ##
 > MIT License

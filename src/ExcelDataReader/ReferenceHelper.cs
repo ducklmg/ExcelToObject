@@ -3,7 +3,7 @@ using System.Text.RegularExpressions;
 
 namespace ExcelDataReader
 {
-    public static class ReferenceHelper
+    internal static class ReferenceHelper
     {
         /// <summary>
         /// Converts references of form A1, B1, C3, DD99 etc to row and col

@@ -71,10 +71,10 @@
     <Compile Include="ExcelDataReader\XlsxXf.cs" />
     <Compile Include="ExcelReader.cs" />
     <Compile Include="ExcelToObjectAttribute.cs" />
-    <Compile Include="ObjectMapper.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="SheetData.cs" />
     <Compile Include="Table.cs" />
+    <Compile Include="TableList.cs" />
     <Compile Include="TableToTypeMap.cs" />
     <Compile Include="Unity.IO.Compression\BlockType.cs" />
     <Compile Include="Unity.IO.Compression\CompressionMode.cs" />
@@ -120,7 +120,8 @@
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
-    <PostBuildEvent>copy $(TargetFileName) ..\..\..\binaries\</PostBuildEvent>
+    <PostBuildEvent>COPY $(TargetFileName) ..\..\..\binaries\
+IF EXIST $(SolutionDir)..\Assets\Plugins\ COPY $(TargetFileName) $(SolutionDir)..\Assets\Plugins\</PostBuildEvent>
   </PropertyGroup>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.
