@@ -26,7 +26,12 @@ namespace ExcelToObject
 
 		public static bool IsValid(this string s)
 		{
-			return String.IsNullOrEmpty(s) == false;
+			return !s.IsEmpty();
+		}
+
+		public static bool IsEmpty(this string s)
+		{
+			return String.IsNullOrEmpty(s);
 		}
 
 		public static byte[] ReadAll(this Stream stream)
