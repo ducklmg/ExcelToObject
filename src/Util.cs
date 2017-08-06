@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.IO;
+using System.ComponentModel;
 
 namespace ExcelToObject
 {
@@ -13,7 +14,16 @@ namespace ExcelToObject
 			if( typeof(T).IsEnum )
 				return (T)Enum.Parse(typeof(T), value);
 
-			return (T)Convert.ChangeType(value, typeof(T));
+			// contribution from gasbank
+			var converter = TypeDescriptor.GetConverter(typeof(T));
+			if( converter != null && converter.CanConvertFrom(value.GetType()) )
+			{
+				return (T)converter.ConvertFrom(value);
+			}
+			else
+			{
+				return (T)Convert.ChangeType(value, typeof(T));
+			}
 		}
 
 		public static object ConvertType(string value, Type type)
@@ -21,7 +31,16 @@ namespace ExcelToObject
 			if( type.IsEnum )
 				return Enum.Parse(type, value);
 
-			return Convert.ChangeType(value, type);
+			// contribution from gasbank
+			var converter = TypeDescriptor.GetConverter(type);
+			if( converter != null && converter.CanConvertFrom(value.GetType()) )
+			{
+				return converter.ConvertFrom(value);
+			}
+			else
+			{
+				return Convert.ChangeType(value, type);
+			}
 		}
 
 		public static bool IsValid(this string s)

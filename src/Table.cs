@@ -293,7 +293,15 @@ namespace ExcelToObject
 			{
 				object key = keySelector.Select(value);
 
-				destDic.Add(key, value);
+				try
+				{
+					destDic.Add(key, value);
+				}
+				catch( ArgumentException ae )
+				{
+					// Key already exists?
+					throw new Exception(string.Format("Duplicated key : tablePath={0}, key={1}", mName, key), ae);
+				}
 			}
 
 			return true;
