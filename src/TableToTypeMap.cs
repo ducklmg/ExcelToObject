@@ -95,37 +95,26 @@ namespace ExcelToObject
 
 		public void SetValue(object obj, string valueStr, ColumnData column)
 		{
-			try
+			object typedValue = Util.ConvertType(valueStr, valueType);
+
+			switch( collectionType )
 			{
-				object typedValue = Util.ConvertType(valueStr, valueType);
+				case CollectionType.None:
+					fieldInfo.SetValue(obj, typedValue);
+					break;
 
-				switch( collectionType )
-				{
-					case CollectionType.None:
-						fieldInfo.SetValue(obj, typedValue);
-						break;
+				case CollectionType.Array:
+					if( arrayIndex < array.Length )
+						array.SetValue(typedValue, arrayIndex++);
+					break;
 
-					case CollectionType.Array:
-						if( arrayIndex < array.Length )
-							array.SetValue(typedValue, arrayIndex++);
-						break;
+				case CollectionType.List:
+					list.Add(typedValue);
+					break;
 
-					case CollectionType.List:
-						list.Add(typedValue);
-						break;
-
-					case CollectionType.Dictionary:
-						dic.Add(column.dicKeyValue, typedValue);
-						break;
-				}
-			}
-			catch( ArgumentException )      // from Enum.Parse
-			{
-				throw new Exception(String.Format("Value string '{0}' is not member of enum {1}", valueStr, valueType.Name));
-			}
-			catch( Exception )
-			{
-				throw new Exception(String.Format("Value string '{0}' is not valid for {1}", valueStr, valueType.Name));
+				case CollectionType.Dictionary:
+					dic.Add(column.dicKeyValue, typedValue);
+					break;
 			}
 		}
 	}

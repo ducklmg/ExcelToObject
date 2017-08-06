@@ -6,73 +6,44 @@ namespace ExcelToObject
 {
 	public class SheetData
 	{
-		string mName;
-		string[,] mData;
-		int mRows;
-		int mColumns;
+		private string[,] Data;
 
-		public string Name { get { return mName; } }
-		public string[,] Data { get { return mData; } }
-		public int Rows { get { return mRows; } }
-		public int Columns { get { return mColumns; } }
+		public string Name { get; private set; }
+		public int Rows { get; private set; }
+		public int Columns { get; private set; }
 
 		public SheetData(string name, string[,] data)
 		{
-			mName = name;
-			mData = data;
-			mRows = data.GetLength(0);
-			mColumns = data.GetLength(1);
+			Name = name;
+			Data = data;
+			Rows = data.GetLength(0);
+			Columns = data.GetLength(1);
 		}
 
 		public string this[int row, int col]
 		{
 			get
 			{
-				return mData[row, col];
+				return Data[row, col];
 			}
 		}
 
 		public Table FindTable(string name)
 		{
-			for( int r = 0; r < mRows; r++ )
-			{
-				for( int c = 0; c < mColumns; c++ )
-				{
-					string value = mData[r, c];
+			string tag = String.Format("[{0}]", name);
 
-					if( Table.IsTableMarker(value, name) )
+			for( int r = 0; r < Rows; r++ )
+			{
+				for( int c = 0; c < Columns; c++ )
+				{
+					if( Data[r, c] == tag )
 					{
-						return new Table(mData, r, c);
+						return new Table(name, this, r, c);
 					}
 				}
 			}
 
 			return null;
-		}
-
-		public void FindTables(string name, List<Table> result)
-		{
-			for( int r = 0; r < mRows; r++ )
-			{
-				for( int c = 0; c < mColumns; c++ )
-				{
-					string value = mData[r, c];
-
-					if( Table.IsTableMarker(value, name) )
-					{
-						result.Add(new Table(mData, r, c));
-					}
-				}
-			}
-		}
-
-		public List<Table> GetAllTables()
-		{
-			var result = new List<Table>();
-
-			FindTables(null, result);
-
-			return result;
 		}
 	}
 }
