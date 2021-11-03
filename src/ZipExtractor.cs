@@ -84,6 +84,8 @@ namespace ExcelToObject
 		{
 			var bytes = mZipArchive;
 
+			int cdCompressLen = BitConverter.ToInt32(bytes, cdPos + 20);
+			int cdUncompressLen = BitConverter.ToInt32(bytes, cdPos + 24);
 			int nameLen = BitConverter.ToInt16(bytes, cdPos + 28);
 			int extraLen = BitConverter.ToInt16(bytes, cdPos + 30);
 			int commentLen = BitConverter.ToInt16(bytes, cdPos + 32);
@@ -97,7 +99,7 @@ namespace ExcelToObject
 			if( sig != 0x04034b50 )
 				throw new ArgumentException("Invalid zip file (local file header signature error)");
 
-			int flag = BitConverter.ToInt16(bytes, headerPos + 8);
+			int flag = BitConverter.ToInt16(bytes, headerPos + 6);
 			int compressLen = BitConverter.ToInt32(bytes, headerPos + 18);
 			int uncompressLen = BitConverter.ToInt32(bytes, headerPos + 22);
 
@@ -111,6 +113,19 @@ namespace ExcelToObject
 			bool compressed = method != 0;      //0=STORE, 8=DEFLATE (https://pkware.cachefly.net/webdocs/casestudies/APPNOTE.TXT)
 
 			int dataPos = headerPos + 30 + name2Len + extra2Len;
+			
+			if( (flag & 0x8) == 0x8 )
+			{
+				// the CRC-32 and file sizes are not known when the header is written.
+				// get from the data descriptor placed at the end of compressed data
+				int dataDescPos = dataPos + cdCompressLen;
+				int dataDescSig = BitConverter.ToInt32(bytes, dataDescPos);
+				if( dataDescSig != 0x08074b50 )
+					throw new ArgumentException("Invalid zip file (local file optional data descriptor signature error)");
+
+				compressLen = BitConverter.ToInt32(bytes, dataDescPos + 8);
+				uncompressLen = BitConverter.ToInt32(bytes, dataDescPos + 12);
+			}
 
 			var header = new FileHeader();
 			header.name = name;
